@@ -8,6 +8,7 @@ import "react-native-reanimated";
 import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { CalculatorProvider } from "@/lib/calculator-context";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -79,7 +80,8 @@ export default function RootLayout() {
   }, [initialInsets, initialFrame]);
 
   const content = (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+      <CalculatorProvider>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
@@ -92,6 +94,7 @@ export default function RootLayout() {
           <StatusBar style="auto" />
         </QueryClientProvider>
       </trpc.Provider>
+      </CalculatorProvider>
     </GestureHandlerRootView>
   );
 

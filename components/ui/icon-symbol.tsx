@@ -14,11 +14,31 @@ type IconSymbolName = keyof typeof MAPPING;
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  // Default
   "house.fill": "home",
   "paperplane.fill": "send",
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
-} as IconMapping;
+  // Calculator app
+  "car.fill": "directions-car",
+  "calculator": "calculate",
+  "dollarsign.circle.fill": "currency-exchange",
+  "list.bullet.clipboard": "receipt-long",
+  "gearshape.fill": "settings",
+  "trash.fill": "delete",
+  "plus.circle.fill": "add-circle",
+  "info.circle.fill": "info",
+  "arrow.right": "arrow-forward",
+  "arrow.clockwise": "refresh",
+  "checkmark.circle.fill": "check-circle",
+  "xmark.circle.fill": "cancel",
+  "square.and.arrow.up": "share",
+  "clock.fill": "history",
+  "pencil": "edit",
+  "chevron.down": "keyboard-arrow-down",
+  "chevron.up": "keyboard-arrow-up",
+  "exclamationmark.triangle.fill": "warning",
+} as unknown as IconMapping;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.

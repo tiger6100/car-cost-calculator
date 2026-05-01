@@ -32,7 +32,7 @@ const env = {
   appSlug: "car-cost-calculator",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "",
+  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663617299353/ncNALAWu8XFnKWNfSVWRU7/car-cost-icon-asBTrnWszhh2aNuvPoW4Ti.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
