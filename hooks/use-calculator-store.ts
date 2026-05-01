@@ -19,6 +19,8 @@ export interface AppSettings {
   handlingFee: number; // 預設 150000
   exchangeRate: number; // 手動匯率
   useManualRate: boolean;
+  rateSource?: string; // 匯率來源
+  rateLastUpdated?: string; // 匯率最後更新時間
 }
 
 const RECORDS_KEY = "car_cost_records";
@@ -97,6 +99,26 @@ export function useCalculatorStore() {
     [records]
   );
 
+  const updateExchangeRateFromAPI = useCallback(
+    async (rate: number, source: string) => {
+      const today = new Date().toLocaleDateString("zh-TW", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      const updated = {
+        ...settings,
+        exchangeRate: rate,
+        useManualRate: false,
+        rateSource: source,
+        rateLastUpdated: today,
+      };
+      setSettings(updated);
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
+    },
+    [settings]
+  );
+
   return {
     records,
     settings,
@@ -105,5 +127,6 @@ export function useCalculatorStore() {
     deleteRecord,
     updateSettings,
     updateRecordTitle,
+    updateExchangeRateFromAPI,
   };
 }

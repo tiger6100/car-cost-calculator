@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   ScrollView,
   Text,
@@ -7,11 +7,13 @@ import {
   Pressable,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useCalculator } from "@/lib/calculator-context";
 import { useColors } from "@/hooks/use-colors";
 import * as Haptics from "expo-haptics";
+import { getLatestExchangeRate } from "@/lib/exchange-rate-service";
 
 function formatNumber(num: number): string {
   return num.toLocaleString("zh-TW", { maximumFractionDigits: 0 });
@@ -23,11 +25,12 @@ function parseInput(value: string): number {
 }
 
 export default function CalculatorScreen() {
-  const { settings, saveRecord } = useCalculator();
+  const { settings, saveRecord, updateExchangeRateFromAPI } = useCalculator();
   const colors = useColors();
 
   const [krwInput, setKrwInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loadingRate, setLoadingRate] = useState(false);
 
   const krwAmount = parseInput(krwInput);
   const exchangeRate = settings.exchangeRate;
@@ -35,6 +38,32 @@ export default function CalculatorScreen() {
   const taxAmount = twdAmount * (settings.taxRate / 100);
   const handlingFee = settings.handlingFee;
   const totalAmount = twdAmount + taxAmount + handlingFee;
+
+  // 頁面載入時自動更新匯率
+  useEffect(() => {
+    fetchAndUpdateRate();
+  }, []);
+
+  const fetchAndUpdateRate = useCallback(async () => {
+    setLoadingRate(true);
+    try {
+      const rateData = await getLatestExchangeRate();
+      if (rateData && rateData.rate > 0) {
+        await updateExchangeRateFromAPI(rateData.rate, rateData.source);
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch exchange rate:", error);
+    } finally {
+      setLoadingRate(false);
+    }
+  }, [updateExchangeRateFromAPI]);
+
+  const handleManualRefresh = useCallback(async () => {
+    await fetchAndUpdateRate();
+  }, [fetchAndUpdateRate]);
 
   const handleSave = useCallback(async () => {
     if (krwAmount <= 0) {
@@ -104,21 +133,65 @@ export default function CalculatorScreen() {
             />
           </View>
 
-          <View className="bg-background rounded-xl p-4 border border-border">
-            <Text className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">
-              自動換算 (TWD)
-            </Text>
-            <View className="flex-row items-end justify-between">
+          {/* Auto Exchange Rate Section */}
+          <View className="bg-background rounded-xl p-4 border border-border mb-3">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-xs font-semibold text-muted uppercase tracking-widest">
+                自動換算 (TWD)
+              </Text>
+              {loadingRate && <ActivityIndicator size="small" color={colors.primary} />}
+            </View>
+            <View className="flex-row items-end justify-between mb-3">
               <Text className="text-3xl font-bold text-primary">
                 {krwAmount > 0 ? formatNumber(twdAmount) : "—"}
               </Text>
-              <View className="items-end">
-                <Text className="text-xs text-muted">
-                  匯率: 1 KRW = {exchangeRate.toFixed(4)} TWD
-                </Text>
-                <Text className="text-xs text-muted opacity-60">手動設定</Text>
+            </View>
+
+            {/* Exchange Rate Info */}
+            <View className="bg-green-50 rounded-lg p-3 border border-green-200 mb-2">
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="text-xs font-semibold text-green-700">台灣銀行當日匯率</Text>
+                {loadingRate && <Text style={{ fontSize: 12, color: colors.muted }}>更新中...</Text>}
+              </View>
+              <View className="flex-row items-end justify-between">
+                <View>
+                  <Text className="text-sm font-bold text-green-900">
+                    1 KRW = {exchangeRate.toFixed(4)} TWD
+                  </Text>
+                  {settings.rateLastUpdated && (
+                    <Text className="text-xs text-green-700 mt-1">
+                      📅 {settings.rateLastUpdated}
+                    </Text>
+                  )}
+                  {settings.rateSource && (
+                    <Text className="text-xs text-green-600">
+                      來源: {settings.rateSource}
+                    </Text>
+                  )}
+                </View>
+                <Pressable
+                  onPress={handleManualRefresh}
+                  disabled={loadingRate}
+                  style={({ pressed }) => ({
+                    backgroundColor: pressed ? "#d1fae5" : "#ecfdf5",
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderWidth: 1,
+                    borderColor: "#a7f3d0",
+                    opacity: loadingRate ? 0.6 : 1,
+                  })}
+                >
+                  <Text style={{ fontSize: 12, color: "#059669", fontWeight: "600" }}>
+                    {loadingRate ? "更新中" : "🔄 刷新"}
+                  </Text>
+                </Pressable>
               </View>
             </View>
+
+            <Text className="text-xs text-muted">
+              💡 匯率每日自動更新，點擊「刷新」可手動更新最新匯率
+            </Text>
           </View>
         </View>
 
