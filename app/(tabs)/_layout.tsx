@@ -36,13 +36,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="exchange"
-        options={{
-          title: "匯率",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="paperplane.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="history"
         options={{
           title: "紀錄",
