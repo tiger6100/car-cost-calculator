@@ -32,21 +32,21 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "計算",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="calculator" color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: "紀錄",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="chevron.left.forwardslash.chevron.right" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="list.bullet.clipboard" color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: "設定",
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="chevron.right" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="gearshape.fill" color={color} />,
         }}
       />
     </Tabs>
