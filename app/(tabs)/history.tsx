@@ -7,6 +7,7 @@ import {
   Alert,
   Modal,
   ScrollView,
+  TextInput,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useCalculator } from "@/lib/calculator-context";
@@ -33,14 +34,26 @@ function RecordDetailModal({
   visible,
   onClose,
   onDelete,
+  onUpdateTitle,
 }: {
   record: CalculationRecord | null;
   visible: boolean;
   onClose: () => void;
   onDelete: (id: string) => void;
+  onUpdateTitle: (id: string, title: string) => void;
 }) {
   const colors = useColors();
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState(record?.title || "");
+
   if (!record) return null;
+
+  const handleSaveTitle = async () => {
+    if (titleInput.trim()) {
+      await onUpdateTitle(record.id, titleInput.trim());
+      setEditingTitle(false);
+    }
+  };
 
   return (
     <Modal
@@ -78,13 +91,94 @@ function RecordDetailModal({
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 20 }}>
-          {/* Date */}
-          <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 16 }}>
-            計算時間：{formatDate(record.date)}
-          </Text>
+          {/* Title Section */}
+          <View style={{ marginBottom: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <Text style={{ fontSize: 12, color: colors.muted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              備註標題
+            </Text>
+            {editingTitle ? (
+              <View style={{ gap: 8 }}>
+                <TextInput
+                  style={{
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: colors.foreground,
+                  }}
+                  placeholder="輸入標題（如：2024 年 5 月 BMW X5）"
+                  placeholderTextColor={colors.muted}
+                  value={titleInput}
+                  onChangeText={setTitleInput}
+                  returnKeyType="done"
+                />
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  <Pressable
+                    onPress={handleSaveTitle}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      backgroundColor: pressed ? "#047857" : "#059669",
+                      borderRadius: 10,
+                      paddingVertical: 10,
+                      alignItems: "center",
+                      transform: [{ scale: pressed ? 0.97 : 1 }],
+                    })}
+                  >
+                    <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>保存</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setEditingTitle(false);
+                      setTitleInput(record.title || "");
+                    }}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      backgroundColor: colors.surface,
+                      borderRadius: 10,
+                      paddingVertical: 10,
+                      alignItems: "center",
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      transform: [{ scale: pressed ? 0.97 : 1 }],
+                    })}
+                  >
+                    <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 14 }}>取消</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  setEditingTitle(true);
+                  setTitleInput(record.title || "");
+                }}
+                style={({ pressed }) => ({
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  backgroundColor: colors.surface,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Text style={{ fontSize: 16, fontWeight: "600", color: record.title ? colors.foreground : colors.muted, flex: 1 }}>
+                  {record.title || "點擊新增標題..."}
+                </Text>
+                <Text style={{ fontSize: 16, color: colors.primary }}>✏️</Text>
+              </Pressable>
+            )}
+          </View>
 
           {/* Detail Items */}
           {[
+            { label: "計算時間", value: formatDate(record.date), highlight: false },
             { label: "韓元金額", value: `₩${formatNumber(record.krwAmount)}`, highlight: false },
             { label: "使用匯率", value: `1 KRW = ${record.exchangeRate.toFixed(4)} TWD`, highlight: false },
             { label: "車輛淨成本 (TWD)", value: `$${formatNumber(record.twdAmount)}`, highlight: false },
@@ -166,7 +260,7 @@ function RecordDetailModal({
 }
 
 export default function HistoryScreen() {
-  const { records, deleteRecord, loading } = useCalculator();
+  const { records, deleteRecord, updateRecordTitle, loading } = useCalculator();
   const colors = useColors();
   const [selectedRecord, setSelectedRecord] = useState<CalculationRecord | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -191,6 +285,11 @@ export default function HistoryScreen() {
         transform: [{ scale: pressed ? 0.98 : 1 }],
       })}
     >
+      {item.title && (
+        <Text style={{ fontSize: 14, fontWeight: "700", color: colors.foreground, marginBottom: 8 }}>
+          {item.title}
+        </Text>
+      )}
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
         <Text style={{ fontSize: 12, color: colors.muted }}>{formatDate(item.date)}</Text>
         <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "600" }}>查看明細 →</Text>
@@ -262,6 +361,7 @@ export default function HistoryScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onDelete={deleteRecord}
+        onUpdateTitle={updateRecordTitle}
       />
     </ScreenContainer>
   );

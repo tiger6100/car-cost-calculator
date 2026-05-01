@@ -8,6 +8,7 @@ interface CalculatorContextType {
   saveRecord: (record: Omit<CalculationRecord, "id" | "date">) => Promise<CalculationRecord>;
   deleteRecord: (id: string) => Promise<void>;
   updateSettings: (newSettings: Partial<AppSettings>) => Promise<void>;
+  updateRecordTitle: (id: string, title: string) => Promise<void>;
 }
 
 const CalculatorContext = createContext<CalculatorContextType | null>(null);

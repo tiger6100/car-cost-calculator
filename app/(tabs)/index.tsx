@@ -54,7 +54,10 @@ export default function CalculatorScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert("已儲存", "計算結果已成功儲存至紀錄。");
+      Alert.alert(
+        "已儲存",
+        "計算結果已成功儲存至紀錄。\n\n提示：前往『紀錄』頁面可以編輯標題，方便日後彙整統計。"
+      );
     } catch (e) {
       Alert.alert("儲存失敗", "請稍後再試。");
     } finally {

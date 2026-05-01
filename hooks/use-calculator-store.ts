@@ -11,6 +11,7 @@ export interface CalculationRecord {
   handlingFee: number;
   totalAmount: number;
   note?: string;
+  title?: string;
 }
 
 export interface AppSettings {
@@ -87,6 +88,15 @@ export function useCalculatorStore() {
     [settings]
   );
 
+  const updateRecordTitle = useCallback(
+    async (id: string, title: string) => {
+      const updated = records.map((r) => (r.id === id ? { ...r, title } : r));
+      setRecords(updated);
+      await AsyncStorage.setItem(RECORDS_KEY, JSON.stringify(updated));
+    },
+    [records]
+  );
+
   return {
     records,
     settings,
@@ -94,5 +104,6 @@ export function useCalculatorStore() {
     saveRecord,
     deleteRecord,
     updateSettings,
+    updateRecordTitle,
   };
 }
