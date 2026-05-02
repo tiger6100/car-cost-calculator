@@ -30,9 +30,9 @@ const SETTINGS_KEY = "car_cost_settings";
 const DEFAULT_SETTINGS: AppSettings = {
   taxRate: 54.3,
   handlingFee: 150000,
-  exchangeRate: 0.0215,
+  exchangeRate: 0, // 將由中央銀行當日匯率填入
   usdExchangeRate: 30.5,
-  useManualRate: true,
+  useManualRate: false, // 預設使用中央銀行當日匯率
 };
 
 export function useCalculatorStore() {
