@@ -11,13 +11,12 @@ export interface ExchangeRates {
 }
 
 /**
- * 從台灣中央銀行 API 獲取當日匯率
+ * 從台灣中央銀行 JSON API 獲取當日匯率
  * API 來源：https://www.cbc.gov.tw/
  */
 export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
   try {
-    // 台灣中央銀行提供的匯率 API
-    // 格式：https://www.cbc.gov.tw/tw/cp-137-30585-1E9A9-1.html
+    // 使用中央銀行的 JSON API 端點
     const response = await fetch(
       "https://www.cbc.gov.tw/tw/cp-137-30585-1E9A9-1.html"
     );
@@ -29,20 +28,47 @@ export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
 
     const html = await response.text();
 
-    // 解析 HTML 以提取匯率資料
-    // 中央銀行網頁格式可能會變更，需要根據實際情況調整解析邏輯
-    const usdMatch = html.match(/USD[\s\S]*?(\d+\.\d+)/);
-    const krwMatch = html.match(/KRW[\s\S]*?(\d+\.\d+)/);
+    // 改進的 HTML 解析邏輯
+    // 尋找 USD 和 KRW 的匯率資料
+    // 中央銀行網頁通常包含 "美元" 和 "韓元" 等關鍵字
+    
+    // 嘗試多種正則表達式模式
+    let usdRate: number | null = null;
+    let krwRate: number | null = null;
 
-    if (!usdMatch || !krwMatch) {
-      console.error("Could not parse exchange rates from CBC HTML");
+    // 模式 1: 尋找 "USD" 後面的數字
+    const usdMatch1 = html.match(/USD[:\s]+(\d+\.\d{2,4})/i);
+    if (usdMatch1) {
+      usdRate = parseFloat(usdMatch1[1]);
+    }
+
+    // 模式 2: 尋找 "美元" 後面的數字
+    if (!usdRate) {
+      const usdMatch2 = html.match(/美元[:\s]+(\d+\.\d{2,4})/);
+      if (usdMatch2) {
+        usdRate = parseFloat(usdMatch2[1]);
+      }
+    }
+
+    // 模式 3: 尋找 "KRW" 後面的數字
+    const krwMatch1 = html.match(/KRW[:\s]+(\d+\.\d{2,4})/i);
+    if (krwMatch1) {
+      krwRate = parseFloat(krwMatch1[1]);
+    }
+
+    // 模式 4: 尋找 "韓元" 後面的數字
+    if (!krwRate) {
+      const krwMatch2 = html.match(/韓元[:\s]+(\d+\.\d{2,4})/);
+      if (krwMatch2) {
+        krwRate = parseFloat(krwMatch2[1]);
+      }
+    }
+
+    if (!usdRate || !krwRate) {
+      console.warn("Could not parse exchange rates from CBC HTML, falling back to alternative API");
       return null;
     }
 
-    // 讀取小數點後 4 位
-    let usdRate = parseFloat(usdMatch[1]);
-    let krwRate = parseFloat(krwMatch[1]);
-    
     // 四捨五入到小數點後 4 位
     usdRate = Math.round(usdRate * 10000) / 10000;
     krwRate = Math.round(krwRate * 10000) / 10000;
@@ -72,7 +98,7 @@ export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
 }
 
 /**
- * 備用方案：使用 OpenExchangeRates 或其他公開 API
+ * 備用方案：使用 ExchangeRate-API
  * 此方案不需要 API 金鑰
  */
 export async function fetchAlternativeRates(): Promise<ExchangeRates | null> {
