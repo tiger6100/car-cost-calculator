@@ -29,8 +29,8 @@ const SETTINGS_KEY = "car_cost_settings";
 const DEFAULT_SETTINGS: AppSettings = {
   taxRate: 54.3,
   handlingFee: 150000,
-  exchangeRate: 0.025,
-  useManualRate: false,
+  exchangeRate: 0.0215,
+  useManualRate: true,
 };
 
 export function useCalculatorStore() {

@@ -116,12 +116,12 @@ export default function SettingsScreen() {
           await updateSettings({
             taxRate: 54.3,
             handlingFee: 150000,
-            exchangeRate: 0.025,
-            useManualRate: false,
+            exchangeRate: 0.0215,
+            useManualRate: true,
           });
           setTaxRate("54.3");
           setHandlingFee("150000");
-          setExchangeRate("0.025");
+          setExchangeRate("0.0215");
           Alert.alert("已重置", "設定已恢復為預設值。");
         },
       },
@@ -219,7 +219,7 @@ export default function SettingsScreen() {
 
           <SettingRow
             label="KRW/TWD 匯率"
-            description="1 韓元等於多少台幣，建議參考台灣銀行即期匯率"
+            description="1 韓元等於多少台幣，預設為 0.0215"
             value={exchangeRate}
             onChangeText={setExchangeRate}
             suffix="TWD/KRW"
