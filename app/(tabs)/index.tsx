@@ -161,9 +161,14 @@ export default function CalculatorScreen() {
 
           {/* KRW Input Section */}
           <View className="mb-4">
-            <Text className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">
-              輸入韓元 (KRW)
-            </Text>
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-xs font-semibold text-muted uppercase tracking-widest">
+                輸入韓元 (KRW)
+              </Text>
+              <Text className="text-xs text-muted">
+                當日: 1 KRW = {settings.exchangeRate.toFixed(1)} TWD
+              </Text>
+            </View>
             <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">
               <Text className="text-muted text-base mr-2">₩</Text>
               <TextInput
@@ -177,11 +182,6 @@ export default function CalculatorScreen() {
                 style={{ fontSize: 18, fontWeight: "600", color: colors.foreground }}
               />
             </View>
-            {krwAmount > 0 && (
-              <Text className="text-xs text-muted mt-2">
-                匯率: 1 KRW = {settings.exchangeRate.toFixed(4)} TWD
-              </Text>
-            )}
           </View>
 
           {/* Divider */}
@@ -193,9 +193,14 @@ export default function CalculatorScreen() {
 
           {/* USD Input Section */}
           <View>
-            <Text className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">
-              輸入美金 (USD)
-            </Text>
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-xs font-semibold text-muted uppercase tracking-widest">
+                輸入美金 (USD)
+              </Text>
+              <Text className="text-xs text-muted">
+                當日: 1 USD = {settings.usdExchangeRate.toFixed(1)} TWD
+              </Text>
+            </View>
             <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">
               <Text className="text-muted text-base mr-2">$</Text>
               <TextInput
@@ -209,11 +214,6 @@ export default function CalculatorScreen() {
                 style={{ fontSize: 18, fontWeight: "600", color: colors.foreground }}
               />
             </View>
-            {usdAmount > 0 && (
-              <Text className="text-xs text-muted mt-2">
-                匯率: 1 USD = {settings.usdExchangeRate.toFixed(2)} TWD
-              </Text>
-            )}
           </View>
 
           {/* Status Indicator */}
