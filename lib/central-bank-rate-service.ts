@@ -39,8 +39,13 @@ export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
       return null;
     }
 
-    const usdRate = parseFloat(usdMatch[1]);
-    const krwRate = parseFloat(krwMatch[1]);
+    // 讀取小數點後 4 位
+    let usdRate = parseFloat(usdMatch[1]);
+    let krwRate = parseFloat(krwMatch[1]);
+    
+    // 四捨五入到小數點後 4 位
+    usdRate = Math.round(usdRate * 10000) / 10000;
+    krwRate = Math.round(krwRate * 10000) / 10000;
 
     if (isNaN(usdRate) || isNaN(krwRate) || usdRate <= 0 || krwRate <= 0) {
       console.error("Invalid exchange rates:", { usdRate, krwRate });
@@ -91,8 +96,16 @@ export async function fetchAlternativeRates(): Promise<ExchangeRates | null> {
 
     // 計算 USD 和 KRW 對 TWD 的匯率
     // API 返回的是 1 TWD = X USD/KRW，需要反轉
-    const usdRate = data.rates.USD ? 1 / data.rates.USD : null;
-    const krwRate = data.rates.KRW ? 1 / data.rates.KRW : null;
+    let usdRate = data.rates.USD ? 1 / data.rates.USD : null;
+    let krwRate = data.rates.KRW ? 1 / data.rates.KRW : null;
+
+    // 四捨五入到小數點後 4 位
+    if (usdRate) {
+      usdRate = Math.round(usdRate * 10000) / 10000;
+    }
+    if (krwRate) {
+      krwRate = Math.round(krwRate * 10000) / 10000;
+    }
 
     if (!usdRate || !krwRate || usdRate <= 0 || krwRate <= 0) {
       console.error("Invalid exchange rates from alternative API:", {
