@@ -242,10 +242,32 @@ export default function CalculatorScreen() {
             </Text>
           </View>
           {rateUpdateTime && (
-            <Text className="text-xs text-muted">
+            <Text className="text-xs text-muted mb-3">
               當日匯率: {rateUpdateTime}
             </Text>
           )}
+          
+          {/* 手動刷新按鈕 */}
+          <Pressable
+            onPress={fetchAndUpdateRates}
+            disabled={loadingRates}
+            style={({ pressed }) => ({
+              backgroundColor: pressed && !loadingRates ? "#047857" : "#059669",
+              opacity: loadingRates ? 0.6 : 1,
+              borderRadius: 8,
+              paddingVertical: 10,
+              paddingHorizontal: 12,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            })}
+          >
+            <Text style={{ fontSize: 16 }}>🔄</Text>
+            <Text style={{ fontSize: 14, fontWeight: "600", color: "#fff" }}>
+              {loadingRates ? "更新中..." : "刷新匯率"}
+            </Text>
+          </Pressable>
         </View>
 
         {/* Tax Card */}
