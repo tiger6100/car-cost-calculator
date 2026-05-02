@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   ScrollView,
   Text,
@@ -12,6 +12,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useCalculator } from "@/lib/calculator-context";
 import { useColors } from "@/hooks/use-colors";
 import * as Haptics from "expo-haptics";
+import { getLatestExchangeRates } from "@/lib/central-bank-rate-service";
 
 function formatNumber(num: number): string {
   return num.toLocaleString("zh-TW", { maximumFractionDigits: 0 });
@@ -25,13 +26,45 @@ function parseInput(value: string): number {
 type CurrencyType = "krw" | "usd" | null;
 
 export default function CalculatorScreen() {
-  const { settings, saveRecord } = useCalculator();
+  const { settings, saveRecord, updateSettings } = useCalculator();
   const colors = useColors();
 
   const [krwInput, setKrwInput] = useState("");
   const [usdInput, setUsdInput] = useState("");
   const [activeCurrency, setActiveCurrency] = useState<CurrencyType>(null);
   const [saving, setSaving] = useState(false);
+  const [loadingRates, setLoadingRates] = useState(true);
+  const [rateUpdateTime, setRateUpdateTime] = useState<string>("");
+
+  // 頁面載入時自動查詢當日匯率
+  useEffect(() => {
+    fetchAndUpdateRates();
+  }, []);
+
+  const fetchAndUpdateRates = useCallback(async () => {
+    setLoadingRates(true);
+    try {
+      const rates = await getLatestExchangeRates();
+      if (rates && rates.usdRate > 0 && rates.krwRate > 0) {
+        await updateSettings({
+          usdExchangeRate: rates.usdRate,
+          exchangeRate: rates.krwRate,
+        });
+        setRateUpdateTime(`${rates.date} (${rates.source})`);
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } else {
+        console.warn("Failed to fetch rates, using default values");
+        setRateUpdateTime("使用預設匯率");
+      }
+    } catch (error) {
+      console.error("Error fetching rates:", error);
+      setRateUpdateTime("使用預設匯率");
+    } finally {
+      setLoadingRates(false);
+    }
+  }, [updateSettings]);
 
   const krwAmount = parseInput(krwInput);
   const usdAmount = parseInput(usdInput);
@@ -199,13 +232,20 @@ export default function CalculatorScreen() {
             <Text className="text-xs font-semibold text-muted uppercase tracking-widest">
               自動換算 (TWD)
             </Text>
+            {loadingRates && (
+              <Text className="text-xs text-primary font-semibold">更新中...</Text>
+            )}
           </View>
-          <View className="flex-row items-end justify-between">
+          <View className="flex-row items-end justify-between mb-3">
             <Text className="text-3xl font-bold text-primary">
               {twdAmount > 0 ? formatNumber(twdAmount) : "—"}
             </Text>
-            <Text className="text-xs text-muted opacity-60">可於設定調整匯率</Text>
           </View>
+          {rateUpdateTime && (
+            <Text className="text-xs text-muted">
+              當日匯率: {rateUpdateTime}
+            </Text>
+          )}
         </View>
 
         {/* Tax Card */}
