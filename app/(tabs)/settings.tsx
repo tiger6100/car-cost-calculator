@@ -240,13 +240,18 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
-          <SettingRow
-            label="USD/TWD 匯率"
-            description={`當日: 1 USD = ${parseFloat(usdExchangeRate).toFixed(3)} TWD`}
-            value={usdExchangeRate}
-            onChangeText={setUsdExchangeRate}
-            suffix="TWD/USD"
-          />
+          {/* 美元匯率來自中央銀行，不提供手動編輯 */}
+          <View style={{ marginBottom: 16, padding: 12, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: colors.muted, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              USD/TWD 匯率
+            </Text>
+            <Text style={{ fontSize: 16, fontWeight: "600", color: colors.foreground, marginBottom: 4 }}>
+              1 USD = {parseFloat(usdExchangeRate).toFixed(3)} TWD
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 18 }}>
+              來自中央銀行當日匯率，不可手動編輯
+            </Text>
+          </View>
         </View>
 
         {/* Save Button */}
