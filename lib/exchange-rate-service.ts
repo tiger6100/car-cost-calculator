@@ -42,23 +42,32 @@ export async function fetchTaiwanBankExchangeRate(): Promise<ExchangeRateData | 
     const dataLine = lines[1];
     const fields = dataLine.split(",");
 
-    if (fields.length < 4) {
-      console.error("Invalid data format");
+    if (fields.length < 5) {
+      console.error("Invalid data format - expected at least 5 fields, got:", fields.length);
       return null;
     }
 
     // 使用即期賣出匯率（通常是進口用匯率）
+    // fields[0]: 幣別 (KRW)
+    // fields[1]: 現金買入
+    // fields[2]: 現金賣出
+    // fields[3]: 即期買入
+    // fields[4]: 即期賣出
     const rateStr = fields[4]?.trim();
-    const rate = parseFloat(rateStr);
-
-    if (isNaN(rate)) {
-      console.error("Invalid rate value:", rateStr);
+    
+    if (!rateStr) {
+      console.error("Empty rate value at field 4");
       return null;
     }
 
-    // 台灣銀行的匯率是以 1 USD = X TWD 的格式
-    // 但我們需要 1 KRW = X TWD 的格式
-    // 因此需要進行轉換
+    const rate = parseFloat(rateStr);
+
+    if (isNaN(rate) || rate <= 0) {
+      console.error("Invalid rate value:", rateStr, "parsed as:", rate);
+      return null;
+    }
+
+    // 台灣銀行的匯率是以 1 KRW = X TWD 的格式
     // 一般參考：1 KRW ≈ 0.023-0.027 TWD
 
     const today = new Date();
@@ -75,7 +84,7 @@ export async function fetchTaiwanBankExchangeRate(): Promise<ExchangeRateData | 
       lastUpdated: new Date().toISOString(),
     };
   } catch (error) {
-    console.error("Error fetching exchange rate:", error);
+    console.error("Error fetching exchange rate from Taiwan Bank:", error);
     return null;
   }
 }
@@ -98,10 +107,16 @@ export async function fetchAlternativeExchangeRate(): Promise<ExchangeRateData |
     }
 
     const data = await response.json();
+    
+    if (!data || typeof data !== "object") {
+      console.error("Invalid JSON response from alternative API");
+      return null;
+    }
+
     const rate = data.rates?.TWD;
 
-    if (!rate) {
-      console.error("No TWD rate found in response");
+    if (!rate || typeof rate !== "number" || rate <= 0) {
+      console.error("No valid TWD rate found in response:", rate);
       return null;
     }
 
@@ -134,7 +149,12 @@ export async function getLatestExchangeRate(): Promise<ExchangeRateData | null> 
   
   // 如果失敗，使用備用 API
   if (!result) {
+    console.log("Taiwan Bank API failed, trying alternative API...");
     result = await fetchAlternativeExchangeRate();
+  }
+
+  if (!result) {
+    console.warn("All exchange rate APIs failed, using default rate");
   }
 
   return result;
