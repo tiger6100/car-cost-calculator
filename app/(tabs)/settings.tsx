@@ -229,7 +229,7 @@ export default function SettingsScreen() {
 
           <SettingRow
             label="KRW/TWD 匯率"
-            description="1 韓元等於多少台幣，預設為 0.0215"
+            description={`當日: 1 KRW = ${parseFloat(exchangeRate).toFixed(3)} TWD`}
             value={exchangeRate}
             onChangeText={setExchangeRate}
             suffix="TWD/KRW"
@@ -237,7 +237,7 @@ export default function SettingsScreen() {
 
           <SettingRow
             label="USD/TWD 匯率"
-            description="1 美元等於多少台幣，預設為 30.5"
+            description={`當日: 1 USD = ${parseFloat(usdExchangeRate).toFixed(3)} TWD`}
             value={usdExchangeRate}
             onChangeText={setUsdExchangeRate}
             suffix="TWD/USD"

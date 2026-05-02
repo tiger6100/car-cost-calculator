@@ -166,7 +166,7 @@ export default function CalculatorScreen() {
                 輸入韓元 (KRW)
               </Text>
               <Text className="text-xs text-muted">
-                當日: 1 KRW = {settings.exchangeRate.toFixed(1)} TWD
+                當日: 1 KRW = {settings.exchangeRate.toFixed(3)} TWD
               </Text>
             </View>
             <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">
@@ -198,7 +198,7 @@ export default function CalculatorScreen() {
                 輸入美金 (USD)
               </Text>
               <Text className="text-xs text-muted">
-                當日: 1 USD = {settings.usdExchangeRate.toFixed(1)} TWD
+                當日: 1 USD = {settings.usdExchangeRate.toFixed(3)} TWD
               </Text>
             </View>
             <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">
