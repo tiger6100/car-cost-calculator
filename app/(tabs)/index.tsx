@@ -78,9 +78,9 @@ export default function CalculatorScreen() {
   
   const taxAmount = twdAmount * (settings.taxRate / 100);
   const handlingFee = settings.handlingFee;
-  const netCost = twdAmount + taxAmount + handlingFee; // 車輛淨成本
-  const additionalTax = netCost * 0.11; // 稅金金額 = 車輛淨成本 × 0.11
-  const totalAmount = netCost + additionalTax; // 總金額
+  const additionalTax = twdAmount * 0.11; // 稅金金額 = 換算匹率後的車輛淨成本 × 0.11
+  const netCost = twdAmount + taxAmount + handlingFee + additionalTax; // 車輛淨成本總計
+  const totalAmount = netCost; // 總金額
 
   const handleKrwChange = (text: string) => {
     setKrwInput(text);
@@ -352,16 +352,16 @@ export default function CalculatorScreen() {
               </View>
               
               <View className="flex-row justify-between items-center py-2 border-b border-border">
-                <Text className="text-sm text-muted">車輛淨成本小計</Text>
+                <Text className="text-sm text-muted">稅金金額 (換算淨成本×0.11)</Text>
                 <Text className="text-base font-semibold text-foreground">
-                  {twdAmount > 0 ? `$${formatNumber(netCost)}` : "\u2014"}
+                  {twdAmount > 0 ? `$${formatNumber(additionalTax)}` : "\u2014"}
                 </Text>
               </View>
               
               <View className="flex-row justify-between items-center py-2 border-b border-border">
-                <Text className="text-sm text-muted">稅金金額 (淨成本×0.11)</Text>
+                <Text className="text-sm text-muted">車輛淨成本總計</Text>
                 <Text className="text-base font-semibold text-foreground">
-                  {twdAmount > 0 ? `$${formatNumber(additionalTax)}` : "\u2014"}
+                  {twdAmount > 0 ? `$${formatNumber(netCost)}` : "\u2014"}
                 </Text>
               </View>
 
