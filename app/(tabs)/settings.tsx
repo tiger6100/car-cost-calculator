@@ -73,17 +73,20 @@ export default function SettingsScreen() {
   const [taxRate, setTaxRate] = useState(settings.taxRate.toString());
   const [handlingFee, setHandlingFee] = useState(settings.handlingFee.toString());
   const [exchangeRate, setExchangeRate] = useState(settings.exchangeRate.toString());
+  const [usdExchangeRate, setUsdExchangeRate] = useState(settings.usdExchangeRate.toString());
 
   useEffect(() => {
     setTaxRate(settings.taxRate.toString());
     setHandlingFee(settings.handlingFee.toString());
     setExchangeRate(settings.exchangeRate.toString());
+    setUsdExchangeRate(settings.usdExchangeRate.toString());
   }, [settings]);
 
   const handleSave = async () => {
     const parsedTax = parseFloat(taxRate);
     const parsedFee = parseFloat(handlingFee.replace(/[^0-9.]/g, ""));
     const parsedRate = parseFloat(exchangeRate);
+    const parsedUsdRate = parseFloat(usdExchangeRate);
 
     if (isNaN(parsedTax) || parsedTax <= 0 || parsedTax > 200) {
       Alert.alert("無效稅率", "請輸入有效的稅率（0~200%）。");
@@ -94,7 +97,11 @@ export default function SettingsScreen() {
       return;
     }
     if (isNaN(parsedRate) || parsedRate <= 0) {
-      Alert.alert("無效匯率", "請輸入有效的匯率數值。");
+      Alert.alert("無效韓元匯率", "請輸入有效的韓元匯率數值。");
+      return;
+    }
+    if (isNaN(parsedUsdRate) || parsedUsdRate <= 0) {
+      Alert.alert("無效美元匯率", "請輸入有效的美元匯率數值。");
       return;
     }
 
@@ -102,6 +109,7 @@ export default function SettingsScreen() {
       taxRate: parsedTax,
       handlingFee: parsedFee,
       exchangeRate: parsedRate,
+      usdExchangeRate: parsedUsdRate,
     });
     Alert.alert("已儲存", "設定已成功更新。");
   };
@@ -117,11 +125,13 @@ export default function SettingsScreen() {
             taxRate: 54.3,
             handlingFee: 150000,
             exchangeRate: 0.0215,
+            usdExchangeRate: 30.5,
             useManualRate: true,
           });
           setTaxRate("54.3");
           setHandlingFee("150000");
           setExchangeRate("0.0215");
+          setUsdExchangeRate("30.5");
           Alert.alert("已重置", "設定已恢復為預設值。");
         },
       },
@@ -223,6 +233,14 @@ export default function SettingsScreen() {
             value={exchangeRate}
             onChangeText={setExchangeRate}
             suffix="TWD/KRW"
+          />
+
+          <SettingRow
+            label="USD/TWD 匯率"
+            description="1 美元等於多少台幣，預設為 30.5"
+            value={usdExchangeRate}
+            onChangeText={setUsdExchangeRate}
+            suffix="TWD/USD"
           />
         </View>
 

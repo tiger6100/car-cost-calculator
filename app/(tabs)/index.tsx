@@ -22,48 +22,87 @@ function parseInput(value: string): number {
   return parseFloat(cleaned) || 0;
 }
 
+type CurrencyType = "krw" | "usd" | null;
+
 export default function CalculatorScreen() {
   const { settings, saveRecord } = useCalculator();
   const colors = useColors();
 
   const [krwInput, setKrwInput] = useState("");
+  const [usdInput, setUsdInput] = useState("");
+  const [activeCurrency, setActiveCurrency] = useState<CurrencyType>(null);
   const [saving, setSaving] = useState(false);
 
   const krwAmount = parseInput(krwInput);
-  const exchangeRate = settings.exchangeRate;
-  const twdAmount = krwAmount * exchangeRate;
+  const usdAmount = parseInput(usdInput);
+
+  // 根據輸入的幣別決定計算邏輯
+  const isKrwMode = activeCurrency === "krw" || (krwAmount > 0 && usdAmount === 0);
+  const isUsdMode = activeCurrency === "usd" || (usdAmount > 0 && krwAmount === 0);
+
+  // 計算台幣金額
+  const twdAmount = isKrwMode ? krwAmount * settings.exchangeRate : usdAmount * settings.usdExchangeRate;
+  
   const taxAmount = twdAmount * (settings.taxRate / 100);
   const handlingFee = settings.handlingFee;
   const totalAmount = twdAmount + taxAmount + handlingFee;
 
+  const handleKrwChange = (text: string) => {
+    setKrwInput(text);
+    if (parseInput(text) > 0) {
+      setActiveCurrency("krw");
+      setUsdInput(""); // 清空美金輸入
+    } else if (parseInput(text) === 0 && parseInput(usdInput) === 0) {
+      setActiveCurrency(null);
+    }
+  };
+
+  const handleUsdChange = (text: string) => {
+    setUsdInput(text);
+    if (parseInput(text) > 0) {
+      setActiveCurrency("usd");
+      setKrwInput(""); // 清空韓元輸入
+    } else if (parseInput(text) === 0 && parseInput(krwInput) === 0) {
+      setActiveCurrency(null);
+    }
+  };
+
   const handleSave = useCallback(async () => {
-    if (krwAmount <= 0) {
-      Alert.alert("請輸入金額", "請先輸入韓元金額再儲存。");
+    if (twdAmount <= 0) {
+      Alert.alert("請輸入金額", "請先輸入韓元或美金金額再儲存。");
       return;
     }
     setSaving(true);
     try {
+      const currencyLabel = isKrwMode ? "韓元" : "美金";
+      const originalAmount = isKrwMode ? krwAmount : usdAmount;
+      
       await saveRecord({
-        krwAmount,
-        exchangeRate,
+        krwAmount: isKrwMode ? krwAmount : 0,
+        exchangeRate: isKrwMode ? settings.exchangeRate : settings.usdExchangeRate,
         twdAmount,
         taxAmount,
         handlingFee,
         totalAmount,
+        note: `${currencyLabel}: ${formatNumber(originalAmount)}`,
       });
+      
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       Alert.alert(
         "已儲存",
-        "計算結果已成功儲存至紀錄。\n\n提示：前往『紀錄』頁面可以編輯標題，方便日後彙整統計。"
+        `${currencyLabel}計算結果已成功儲存至紀錄。\n\n提示：前往『紀錄』頁面可以編輯標題，方便日後彙整統計。`
       );
+      setKrwInput("");
+      setUsdInput("");
+      setActiveCurrency(null);
     } catch (e) {
       Alert.alert("儲存失敗", "請稍後再試。");
     } finally {
       setSaving(false);
     }
-  }, [krwAmount, exchangeRate, twdAmount, taxAmount, handlingFee, totalAmount, saveRecord]);
+  }, [isKrwMode, krwAmount, usdAmount, twdAmount, taxAmount, handlingFee, totalAmount, settings, saveRecord]);
 
   return (
     <ScreenContainer containerClassName="bg-background">
@@ -80,48 +119,92 @@ export default function CalculatorScreen() {
           <Text className="text-xl font-bold text-foreground">購車成本計算器</Text>
         </View>
 
-        {/* KRW Input Card */}
+        {/* Currency Input Card */}
         <View className="mx-4 mb-4 bg-surface rounded-2xl p-5 border border-border shadow-sm">
-          <View className="flex-row items-center gap-2 mb-3">
+          <View className="flex-row items-center gap-2 mb-4">
             <Text style={{ fontSize: 18 }}>💱</Text>
-            <Text className="text-base font-semibold text-foreground">韓元轉台幣換算</Text>
+            <Text className="text-base font-semibold text-foreground">幣別轉台幣換算</Text>
           </View>
 
-          <Text className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">
-            輸入韓元 (KRW)
-          </Text>
-          <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border mb-3">
-            <Text className="text-muted text-base mr-2">₩</Text>
-            <TextInput
-              className="flex-1 text-lg font-semibold text-foreground"
-              placeholder="50,000,000"
-              placeholderTextColor={colors.muted}
-              keyboardType="numeric"
-              value={krwInput}
-              onChangeText={setKrwInput}
-              returnKeyType="done"
-              style={{ fontSize: 18, fontWeight: "600", color: colors.foreground }}
-            />
+          {/* KRW Input Section */}
+          <View className="mb-4">
+            <Text className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">
+              輸入韓元 (KRW)
+            </Text>
+            <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">
+              <Text className="text-muted text-base mr-2">₩</Text>
+              <TextInput
+                className="flex-1 text-lg font-semibold text-foreground"
+                placeholder="50,000,000"
+                placeholderTextColor={colors.muted}
+                keyboardType="numeric"
+                value={krwInput}
+                onChangeText={handleKrwChange}
+                returnKeyType="done"
+                style={{ fontSize: 18, fontWeight: "600", color: colors.foreground }}
+              />
+            </View>
+            {krwAmount > 0 && (
+              <Text className="text-xs text-muted mt-2">
+                匯率: 1 KRW = {settings.exchangeRate.toFixed(4)} TWD
+              </Text>
+            )}
           </View>
 
-          {/* Auto Exchange Rate Section */}
-          <View className="bg-background rounded-xl p-4 border border-border">
-            <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-xs font-semibold text-muted uppercase tracking-widest">
-                自動換算 (TWD)
+          {/* Divider */}
+          <View className="flex-row items-center gap-2 mb-4">
+            <View className="flex-1 h-px bg-border" />
+            <Text className="text-xs text-muted font-semibold">或</Text>
+            <View className="flex-1 h-px bg-border" />
+          </View>
+
+          {/* USD Input Section */}
+          <View>
+            <Text className="text-xs font-semibold text-muted uppercase tracking-widest mb-1">
+              輸入美金 (USD)
+            </Text>
+            <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">
+              <Text className="text-muted text-base mr-2">$</Text>
+              <TextInput
+                className="flex-1 text-lg font-semibold text-foreground"
+                placeholder="50,000"
+                placeholderTextColor={colors.muted}
+                keyboardType="numeric"
+                value={usdInput}
+                onChangeText={handleUsdChange}
+                returnKeyType="done"
+                style={{ fontSize: 18, fontWeight: "600", color: colors.foreground }}
+              />
+            </View>
+            {usdAmount > 0 && (
+              <Text className="text-xs text-muted mt-2">
+                匯率: 1 USD = {settings.usdExchangeRate.toFixed(2)} TWD
+              </Text>
+            )}
+          </View>
+
+          {/* Status Indicator */}
+          {activeCurrency && (
+            <View className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <Text className="text-xs text-blue-700 font-semibold">
+                ℹ️ 目前使用{activeCurrency === "krw" ? "韓元" : "美金"}計算，另一幣別已自動清空
               </Text>
             </View>
-            <View className="flex-row items-end justify-between">
-              <Text className="text-3xl font-bold text-primary">
-                {krwAmount > 0 ? formatNumber(twdAmount) : "—"}
-              </Text>
-              <View className="items-end">
-                <Text className="text-xs text-muted">
-                  匯率: 1 KRW = {exchangeRate.toFixed(4)} TWD
-                </Text>
-                <Text className="text-xs text-muted opacity-60">可於設定調整</Text>
-              </View>
-            </View>
+          )}
+        </View>
+
+        {/* Auto Exchange Rate Section */}
+        <View className="mx-4 mb-4 bg-background rounded-xl p-4 border border-border">
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xs font-semibold text-muted uppercase tracking-widest">
+              自動換算 (TWD)
+            </Text>
+          </View>
+          <View className="flex-row items-end justify-between">
+            <Text className="text-3xl font-bold text-primary">
+              {twdAmount > 0 ? formatNumber(twdAmount) : "—"}
+            </Text>
+            <Text className="text-xs text-muted opacity-60">可於設定調整匯率</Text>
           </View>
         </View>
 
@@ -138,14 +221,14 @@ export default function CalculatorScreen() {
             <View className="flex-1 bg-inputBg rounded-xl p-3 border border-border">
               <Text className="text-xs text-muted mb-1">車輛進口淨成本 (TWD)</Text>
               <Text className="text-base font-semibold text-foreground">
-                {krwAmount > 0 ? formatNumber(twdAmount) : "—"}
+                {twdAmount > 0 ? formatNumber(twdAmount) : "—"}
               </Text>
             </View>
             <Text className="text-primary text-xl">→</Text>
             <View className="flex-1 bg-green-50 rounded-xl p-3 border border-green-100">
               <Text className="text-xs text-green-700 mb-1">預估總稅額</Text>
               <Text className="text-xl font-bold text-primary">
-                {krwAmount > 0 ? formatNumber(taxAmount) : "—"}
+                {twdAmount > 0 ? formatNumber(taxAmount) : "—"}
               </Text>
               <Text className="text-xs text-green-600 mt-1">TWD</Text>
             </View>
@@ -188,13 +271,13 @@ export default function CalculatorScreen() {
               <View className="flex-row justify-between items-center py-2 border-b border-border">
                 <Text className="text-sm text-muted">車輛淨成本</Text>
                 <Text className="text-base font-semibold text-foreground">
-                  {krwAmount > 0 ? `$${formatNumber(twdAmount)}` : "—"}
+                  {twdAmount > 0 ? `$${formatNumber(twdAmount)}` : "—"}
                 </Text>
               </View>
               <View className="flex-row justify-between items-center py-2 border-b border-border">
                 <Text className="text-sm text-muted">預估稅金 ({settings.taxRate}%)</Text>
                 <Text className="text-base font-semibold text-foreground">
-                  {krwAmount > 0 ? `$${formatNumber(taxAmount)}` : "—"}
+                  {twdAmount > 0 ? `$${formatNumber(taxAmount)}` : "—"}
                 </Text>
               </View>
               <View className="flex-row justify-between items-center py-2 border-b border-border">
@@ -214,7 +297,7 @@ export default function CalculatorScreen() {
                   </View>
                   <View className="items-end">
                     <Text className="text-4xl font-bold text-foreground">
-                      {krwAmount > 0 ? formatNumber(totalAmount) : "—"}
+                      {twdAmount > 0 ? formatNumber(totalAmount) : "—"}
                     </Text>
                     <Text className="text-xs text-muted">TWD</Text>
                   </View>
@@ -226,9 +309,9 @@ export default function CalculatorScreen() {
           {/* Save Button */}
           <Pressable
             onPress={handleSave}
-            disabled={saving}
+            disabled={saving || twdAmount <= 0}
             style={({ pressed }) => ({
-              backgroundColor: pressed ? "#047857" : "#059669",
+              backgroundColor: twdAmount > 0 ? (pressed ? "#047857" : "#059669") : "#d1d5db",
               margin: 16,
               marginTop: 0,
               borderRadius: 16,
@@ -241,7 +324,7 @@ export default function CalculatorScreen() {
               opacity: saving ? 0.7 : 1,
             })}
           >
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+            <Text style={{ color: twdAmount > 0 ? "#fff" : "#6b7280", fontSize: 16, fontWeight: "600" }}>
               {saving ? "儲存中..." : "🧮 重新計算並儲存"}
             </Text>
           </Pressable>

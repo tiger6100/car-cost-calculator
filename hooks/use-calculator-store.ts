@@ -17,7 +17,8 @@ export interface CalculationRecord {
 export interface AppSettings {
   taxRate: number; // 預設 54.3
   handlingFee: number; // 預設 150000
-  exchangeRate: number; // 手動匯率
+  exchangeRate: number; // 韓元匯率
+  usdExchangeRate: number; // 美元匯率
   useManualRate: boolean;
   rateSource?: string; // 匯率來源
   rateLastUpdated?: string; // 匯率最後更新時間
@@ -30,6 +31,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   taxRate: 54.3,
   handlingFee: 150000,
   exchangeRate: 0.0215,
+  usdExchangeRate: 30.5,
   useManualRate: true,
 };
 
