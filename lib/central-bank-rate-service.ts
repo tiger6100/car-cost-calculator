@@ -1,5 +1,5 @@
 /**
- * 台灣合庫金庫匯率 API 服務
+ * 台灣匯率 API 服務
  * 提取當日美金 (USD) 及韓幣 (KRW) 對台幣的賣出匯率
  */
 
@@ -11,52 +11,43 @@ export interface ExchangeRates {
 }
 
 /**
- * 從台灣合庫金庫獲取當日賣出匯率
- * API 來源：https://www.tcbank.com.tw/
+ * 從台灣銀行獲取當日賣出匯率
+ * API 來源：台灣銀行公開 API
  */
 export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
   try {
-    // 使用合庫金庫的匯率查詢 API
+    // 使用台灣銀行的匯率查詢 API
     const response = await fetch(
-      "https://www.tcbank.com.tw/api/exchange/rates"
+      "https://rate.bot.com.tw/xrt/quote/history/USD/2026-05-04"
     );
 
     if (!response.ok) {
-      console.error("Failed to fetch from Cooperative Bank API:", response.status);
+      console.error("Failed to fetch from Bank of Taiwan API:", response.status);
       return null;
     }
 
     const data = await response.json();
 
     if (!data || typeof data !== "object") {
-      console.error("Invalid JSON response from Cooperative Bank API");
+      console.error("Invalid JSON response from Bank of Taiwan API");
       return null;
     }
 
+    // 台灣銀行 API 返回的格式：{ result: true, data: { USD: { sell: "32.123" } } }
     let usdRate: number | null = null;
     let krwRate: number | null = null;
 
-    // 尋找 USD 和 KRW 的賣出匯率
-    if (Array.isArray(data.rates)) {
-      for (const rate of data.rates) {
-        if (rate.currency === "USD" && rate.type === "sell") {
-          usdRate = parseFloat(rate.rate);
-        } else if (rate.currency === "KRW" && rate.type === "sell") {
-          krwRate = parseFloat(rate.rate);
-        }
+    if (data.data && typeof data.data === "object") {
+      if (data.data.USD && data.data.USD.sell) {
+        usdRate = parseFloat(data.data.USD.sell);
       }
-    } else if (typeof data === "object") {
-      // 嘗試直接訪問屬性
-      if (data.USD && data.USD.sell) {
-        usdRate = parseFloat(data.USD.sell);
-      }
-      if (data.KRW && data.KRW.sell) {
-        krwRate = parseFloat(data.KRW.sell);
+      if (data.data.KRW && data.data.KRW.sell) {
+        krwRate = parseFloat(data.data.KRW.sell);
       }
     }
 
     if (!usdRate || !krwRate) {
-      console.warn("Could not parse exchange rates from Cooperative Bank API, falling back to alternative API");
+      console.warn("Could not parse exchange rates from Bank of Taiwan API, falling back to alternative API");
       return null;
     }
 
@@ -80,10 +71,10 @@ export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
       usdRate,
       krwRate,
       date: dateStr,
-      source: "合庫金庫",
+      source: "台灣銀行",
     };
   } catch (error) {
-    console.error("Error fetching exchange rates from Cooperative Bank:", error);
+    console.error("Error fetching exchange rates from Bank of Taiwan:", error);
     return null;
   }
 }
@@ -153,15 +144,15 @@ export async function fetchAlternativeRates(): Promise<ExchangeRates | null> {
 
 /**
  * 主要匯率獲取函數
- * 優先使用合庫金庫 API，失敗時使用備用方案
+ * 優先使用台灣銀行 API，失敗時使用備用方案
  */
 export async function getLatestExchangeRates(): Promise<ExchangeRates | null> {
-  // 優先嘗試合庫金庫 API
+  // 優先嘗試台灣銀行 API
   let result = await fetchCentralBankRates();
 
   // 如果失敗，使用備用 API
   if (!result) {
-    console.log("Cooperative Bank API failed, trying alternative API...");
+    console.log("Bank of Taiwan API failed, trying alternative API...");
     result = await fetchAlternativeRates();
   }
 
