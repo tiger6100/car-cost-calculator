@@ -1,6 +1,6 @@
 /**
- * 台灣中央銀行匯率 API 服務
- * 提取當日美金 (USD) 及韓幣 (KRW) 對台幣的匯率
+ * 台灣合庫金庫匯率 API 服務
+ * 提取當日美金 (USD) 及韓幣 (KRW) 對台幣的賣出匯率
  */
 
 export interface ExchangeRates {
@@ -11,61 +11,52 @@ export interface ExchangeRates {
 }
 
 /**
- * 從台灣中央銀行 JSON API 獲取當日匯率
- * API 來源：https://www.cbc.gov.tw/
+ * 從台灣合庫金庫獲取當日賣出匯率
+ * API 來源：https://www.tcbank.com.tw/
  */
 export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
   try {
-    // 使用中央銀行的 JSON API 端點
+    // 使用合庫金庫的匯率查詢 API
     const response = await fetch(
-      "https://www.cbc.gov.tw/tw/cp-137-30585-1E9A9-1.html"
+      "https://www.tcbank.com.tw/api/exchange/rates"
     );
 
     if (!response.ok) {
-      console.error("Failed to fetch from CBC API:", response.status);
+      console.error("Failed to fetch from Cooperative Bank API:", response.status);
       return null;
     }
 
-    const html = await response.text();
+    const data = await response.json();
 
-    // 改進的 HTML 解析邏輯
-    // 尋找 USD 和 KRW 的匯率資料
-    // 中央銀行網頁通常包含 "美元" 和 "韓元" 等關鍵字
-    
-    // 嘗試多種正則表達式模式
+    if (!data || typeof data !== "object") {
+      console.error("Invalid JSON response from Cooperative Bank API");
+      return null;
+    }
+
     let usdRate: number | null = null;
     let krwRate: number | null = null;
 
-    // 模式 1: 尋找 "USD" 後面的數字
-    const usdMatch1 = html.match(/USD[:\s]+(\d+\.\d{2,4})/i);
-    if (usdMatch1) {
-      usdRate = parseFloat(usdMatch1[1]);
-    }
-
-    // 模式 2: 尋找 "美元" 後面的數字
-    if (!usdRate) {
-      const usdMatch2 = html.match(/美元[:\s]+(\d+\.\d{2,4})/);
-      if (usdMatch2) {
-        usdRate = parseFloat(usdMatch2[1]);
+    // 尋找 USD 和 KRW 的賣出匯率
+    if (Array.isArray(data.rates)) {
+      for (const rate of data.rates) {
+        if (rate.currency === "USD" && rate.type === "sell") {
+          usdRate = parseFloat(rate.rate);
+        } else if (rate.currency === "KRW" && rate.type === "sell") {
+          krwRate = parseFloat(rate.rate);
+        }
       }
-    }
-
-    // 模式 3: 尋找 "KRW" 後面的數字
-    const krwMatch1 = html.match(/KRW[:\s]+(\d+\.\d{2,4})/i);
-    if (krwMatch1) {
-      krwRate = parseFloat(krwMatch1[1]);
-    }
-
-    // 模式 4: 尋找 "韓元" 後面的數字
-    if (!krwRate) {
-      const krwMatch2 = html.match(/韓元[:\s]+(\d+\.\d{2,4})/);
-      if (krwMatch2) {
-        krwRate = parseFloat(krwMatch2[1]);
+    } else if (typeof data === "object") {
+      // 嘗試直接訪問屬性
+      if (data.USD && data.USD.sell) {
+        usdRate = parseFloat(data.USD.sell);
+      }
+      if (data.KRW && data.KRW.sell) {
+        krwRate = parseFloat(data.KRW.sell);
       }
     }
 
     if (!usdRate || !krwRate) {
-      console.warn("Could not parse exchange rates from CBC HTML, falling back to alternative API");
+      console.warn("Could not parse exchange rates from Cooperative Bank API, falling back to alternative API");
       return null;
     }
 
@@ -89,10 +80,10 @@ export async function fetchCentralBankRates(): Promise<ExchangeRates | null> {
       usdRate,
       krwRate,
       date: dateStr,
-      source: "台灣中央銀行",
+      source: "合庫金庫",
     };
   } catch (error) {
-    console.error("Error fetching exchange rates from CBC:", error);
+    console.error("Error fetching exchange rates from Cooperative Bank:", error);
     return null;
   }
 }
@@ -162,15 +153,15 @@ export async function fetchAlternativeRates(): Promise<ExchangeRates | null> {
 
 /**
  * 主要匯率獲取函數
- * 優先使用中央銀行 API，失敗時使用備用方案
+ * 優先使用合庫金庫 API，失敗時使用備用方案
  */
 export async function getLatestExchangeRates(): Promise<ExchangeRates | null> {
-  // 優先嘗試中央銀行 API
+  // 優先嘗試合庫金庫 API
   let result = await fetchCentralBankRates();
 
   // 如果失敗，使用備用 API
   if (!result) {
-    console.log("CBC API failed, trying alternative API...");
+    console.log("Cooperative Bank API failed, trying alternative API...");
     result = await fetchAlternativeRates();
   }
 
