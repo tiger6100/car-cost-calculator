@@ -229,7 +229,7 @@ export default function SettingsScreen() {
 
             <SettingRow
             label="KRW/TWD 匯率"
-            description="韓元對台幣匯率，預設值來自中央銀行當日匯率"
+            description="韓元對台幣匯率，預設值來自合作金庫賣出匯率"
             value={exchangeRate}
             onChangeText={setExchangeRate}
             suffix="TWD"
@@ -237,7 +237,7 @@ export default function SettingsScreen() {
 
           <SettingRow
             label="USD/TWD 匯率"
-            description="美元對台幣匯率，預設值來自中央銀行當日匯率"
+            description="美元對台幣匯率，預設值來自合作金庫賣出匯率"
             value={usdExchangeRate}
             onChangeText={setUsdExchangeRate}
             suffix="TWD"
