@@ -239,6 +239,18 @@ export default function CalculatorScreen() {
                 style={{ fontSize: 18, fontWeight: "600", color: colors.foreground }}
               />
             </View>
+            {/* USD to KRW Conversion Display */}
+            {usdAmount > 0 && (
+              <View className="mt-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                <Text className="text-xs text-green-600 font-semibold mb-1">換算為韓元</Text>
+                <Text className="text-lg font-bold text-green-700">
+                  ₩ {formatNumber(usdAmount / (settings.exchangeRate / settings.usdExchangeRate))}
+                </Text>
+                <Text className="text-xs text-green-600 mt-1">
+                  匯率: 1 USD = {(settings.usdExchangeRate / settings.exchangeRate).toFixed(4)} KRW
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Status Indicator */}
