@@ -72,14 +72,14 @@ export default function SettingsScreen() {
 
   const [taxRate, setTaxRate] = useState(settings.taxRate.toString());
   const [handlingFee, setHandlingFee] = useState(settings.handlingFee.toString());
-  const [exchangeRate, setExchangeRate] = useState(settings.exchangeRate.toString());
-  const [usdExchangeRate, setUsdExchangeRate] = useState(settings.usdExchangeRate.toString());
+  const [exchangeRate, setExchangeRate] = useState(settings.exchangeRate.toFixed(4));
+  const [usdExchangeRate, setUsdExchangeRate] = useState(settings.usdExchangeRate.toFixed(4));
 
   useEffect(() => {
     setTaxRate(settings.taxRate.toString());
     setHandlingFee(settings.handlingFee.toString());
-    setExchangeRate(settings.exchangeRate.toString());
-    setUsdExchangeRate(settings.usdExchangeRate.toString());
+    setExchangeRate(settings.exchangeRate.toFixed(4));
+    setUsdExchangeRate(settings.usdExchangeRate.toFixed(4));
   }, [settings]);
 
   const handleSave = async () => {
