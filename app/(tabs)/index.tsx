@@ -18,6 +18,15 @@ function formatNumber(num: number): string {
   return num.toLocaleString("zh-TW", { maximumFractionDigits: 0 });
 }
 
+function formatNumberWithCommas(num: string): string {
+  const cleaned = num.replace(/[^0-9.]/g, "");
+  const parts = cleaned.split(".");
+  const integerPart = parts[0];
+  const decimalPart = parts[1];
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+}
+
 function parseInput(value: string): number {
   const cleaned = value.replace(/[^0-9.]/g, "");
   return parseFloat(cleaned) || 0;
@@ -83,7 +92,8 @@ export default function CalculatorScreen() {
   const totalAmount = netCost; // 總金額
 
   const handleKrwChange = (text: string) => {
-    setKrwInput(text);
+    const formatted = formatNumberWithCommas(text);
+    setKrwInput(formatted);
     if (parseInput(text) > 0) {
       setActiveCurrency("krw");
       setUsdInput(""); // 清空美金輸入
@@ -93,7 +103,8 @@ export default function CalculatorScreen() {
   };
 
   const handleUsdChange = (text: string) => {
-    setUsdInput(text);
+    const formatted = formatNumberWithCommas(text);
+    setUsdInput(formatted);
     if (parseInput(text) > 0) {
       setActiveCurrency("usd");
       setKrwInput(""); // 清空韓元輸入
@@ -168,7 +179,7 @@ export default function CalculatorScreen() {
                 輸入韓元 (KRW)
               </Text>
               <Text className="text-xs text-muted">
-                合庫賣出: 1 KRW = {settings.exchangeRate.toFixed(3)} TWD
+                合庫賣出: 1 KRW = {settings.exchangeRate.toFixed(4)} TWD
               </Text>
             </View>
             <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">
@@ -200,7 +211,7 @@ export default function CalculatorScreen() {
                 輸入美金 (USD)
               </Text>
               <Text className="text-xs text-muted">
-                合庫賣出: 1 USD = {settings.usdExchangeRate.toFixed(3)} TWD
+                合庫賣出: 1 USD = {settings.usdExchangeRate.toFixed(4)} TWD
               </Text>
             </View>
             <View className="flex-row items-center bg-inputBg rounded-xl px-4 py-3 border border-border">

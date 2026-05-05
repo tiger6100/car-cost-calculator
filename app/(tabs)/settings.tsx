@@ -7,10 +7,13 @@ import {
   Pressable,
   Alert,
   Switch,
+  Platform,
 } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useCalculator } from "@/lib/calculator-context";
 import { useColors } from "@/hooks/use-colors";
+import * as Haptics from "expo-haptics";
+import { getLatestExchangeRates } from "@/lib/central-bank-rate-service";
 
 function SettingRow({
   label,
@@ -112,6 +115,28 @@ export default function SettingsScreen() {
       usdExchangeRate: parsedUsdRate,
     });
     Alert.alert("已儲存", "設定已成功更新。");
+  };
+
+  const handleRefreshRates = async () => {
+    try {
+      const rates = await getLatestExchangeRates();
+      if (rates && rates.usdRate > 0 && rates.krwRate > 0) {
+        setExchangeRate(rates.krwRate.toFixed(4));
+        setUsdExchangeRate(rates.usdRate.toFixed(4));
+        await updateSettings({
+          exchangeRate: rates.krwRate,
+          usdExchangeRate: rates.usdRate,
+        });
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        Alert.alert("已更新", `匯率已更新至最新合庫賣出匯率\n韓元: ${rates.krwRate.toFixed(4)}\n美金: ${rates.usdRate.toFixed(4)}`);
+      } else {
+        Alert.alert("更新失敗", "無法取得最新匯率，請檢查網路連線。");
+      }
+    } catch (error) {
+      Alert.alert("更新失敗", "取得匯率時發生錯誤，請稍後再試。");
+    }
   };
 
   const handleReset = () => {
@@ -242,6 +267,23 @@ export default function SettingsScreen() {
             onChangeText={setUsdExchangeRate}
             suffix="TWD"
           />
+
+          <Pressable
+            onPress={handleRefreshRates}
+            style={({ pressed }) => ({
+              marginTop: 12,
+              backgroundColor: pressed ? "#0891b2" : "#06b6d4",
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              alignItems: "center",
+              transform: [{ scale: pressed ? 0.97 : 1 }],
+            })}
+          >
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>
+              🔄 刷新合庫匯率
+            </Text>
+          </Pressable>
         </View>
 
         {/* Save Button */}
