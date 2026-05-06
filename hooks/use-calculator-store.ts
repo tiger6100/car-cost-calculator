@@ -20,7 +20,7 @@ export interface AppSettings {
   exchangeRate: number; // 韓元匯率
   usdExchangeRate: number; // 美元匯率
   useManualRate: boolean;
-  rateSource?: string; // 匯率來源
+  rateSource?: string; // 匯率來源 - 預設為合作金庫賣出匯率
   rateLastUpdated?: string; // 匯率最後更新時間
 }
 
@@ -30,9 +30,9 @@ const SETTINGS_KEY = "car_cost_settings";
 const DEFAULT_SETTINGS: AppSettings = {
   taxRate: 54.3,
   handlingFee: 150000,
-  exchangeRate: 0, // 將由中央銀行當日匯率填入
-  usdExchangeRate: 0, // 將由中央銀行當日匯率填入
-  useManualRate: false, // 預設使用中央銀行當日匯率
+  exchangeRate: 0.0215, // 預設使用合作金庫賣出匯率（韓元）
+  usdExchangeRate: 31.5, // 預設使用合作金庫賣出匯率（美元）
+  useManualRate: false, // 預設使用合作金庫當日匯率
 };
 
 export function useCalculatorStore() {
